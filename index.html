@@ -1,1 +1,413 @@
-<h1>Test</h1>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Matriz Generativa de Futuros — Caos Controlado (Offline)</title>
+<style>
+:root{
+  --bg1:#05060a;
+  --bg2:#071021;
+  --accent1:#8fffd0;
+  --accent2:#c9b7ff;
+  --muted:#9fb0b8;
+  --card:#0f1720;
+  --good:#2ecc71;
+  --bad:#ff6b6b;
+  --neutral:#f3c969;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: radial-gradient(circle at 15% 10%, rgba(143,255,208,0.04) 0%, transparent 10%), linear-gradient(180deg,var(--bg1),var(--bg2));
+  color:#e8f1f0;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:18px;
+}
+.header{text-align:center;margin-bottom:12px;}
+.h1{font-family: "Orbitron", sans-serif; font-weight:700; letter-spacing:1px; color:var(--accent1); font-size:20px;}
+.h2{color:var(--accent2); margin-top:6px; font-size:13px; opacity:0.95;}
+
+.app{width:100%; max-width:1200px; display:grid; grid-template-columns: 1fr 420px; gap:18px; align-items:start;}
+
+/* Left */
+.left{display:flex;flex-direction:column;gap:12px;}
+.current{background:rgba(255,255,255,0.03); border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(6px);}
+.dimgrid{display:grid; grid-template-columns: repeat(2,1fr); gap:8px; margin-bottom:10px;}
+.dim{background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:10px; padding:10px; border:1px solid rgba(255,255,255,0.03);}
+.dim .label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px;}
+.dim .value{margin-top:6px; font-size:15px; font-weight:600; color:#fff;}
+
+/* Controls */
+.controls{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+.btn{background: linear-gradient(90deg,var(--accent1), var(--accent2)); color:#03121a; border:none; padding:8px 12px; border-radius:999px; cursor:pointer; font-weight:700;}
+.btn.secondary{background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted); font-weight:600;}
+.small{padding:6px 10px; font-size:13px;}
+
+/* Meter */
+.meter{margin-top:10px; display:flex; align-items:center; gap:10px;}
+.meterBar{flex:1; height:12px; background:rgba(255,255,255,0.05); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.03);}
+.meterFill{height:100%; width:0%; background:linear-gradient(90deg,var(--good), var(--neutral), var(--bad)); transition:width 0.6s ease;}
+.meterLabel{font-size:13px; color:var(--muted); min-width:120px; text-align:right;}
+
+/* Board */
+.board{margin-top:8px; display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px;}
+.boardCard{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.04); min-height:110px; display:flex; flex-direction:column; gap:6px;}
+.cardTitle{font-weight:700; color:#fff; font-size:13px;}
+.tag{background:rgba(0,0,0,0.25); color:#cfe9df; padding:4px 8px; font-size:12px; border-radius:999px; border:1px solid rgba(255,255,255,0.03);}
+
+/* Right column */
+.right{display:flex; flex-direction:column; gap:12px; align-items:stretch;}
+.panel{background:rgba(255,255,255,0.03); border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.04);}
+.panel h3{margin:0 0 8px 0; font-size:13px; color:var(--accent1);}
+
+/* sliders */
+.row{display:flex; gap:8px; align-items:center; margin-top:6px;}
+.range{width:100%;}
+
+/* Footer */
+.footer{margin-top:14px; font-size:12px; color:var(--muted); text-align:center;}
+
+/* Responsive */
+@media (max-width:980px){ .app{grid-template-columns:1fr;} .dimgrid{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="h1">🔮 Matriz Generativa de Futuros — Caos Controlado</div>
+    <div class="h2">Offline — Generá escenarios con grado de armonía o conflicto</div>
+  </div>
+
+  <div class="app">
+    <div class="left">
+      <div class="current">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div class="cardTitle" id="titulo">— — —</div>
+            <div style="color:#cfe9df;font-style:italic;font-size:13px;margin-top:6px" id="narrativa">Generá un futuro para comenzar.</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--muted)" id="metaId">ID: —</div>
+            <div style="height:8px"></div>
+            <button class="btn small" id="addBtn">Agregar al tablero</button>
+          </div>
+        </div>
+
+        <div class="dimgrid" style="margin-top:10px">
+          <div class="dim"><div class="label">Ontología</div><div class="value" id="dOnt">—</div></div>
+          <div class="dim"><div class="label">Territorio</div><div class="value" id="dTerr">—</div></div>
+          <div class="dim"><div class="label">Sociedad</div><div class="value" id="dSoc">—</div></div>
+          <div class="dim"><div class="label">Tecnología</div><div class="value" id="dTec">—</div></div>
+          <div class="dim" style="grid-column:1/-1"><div class="label">Ecología / Metafísica</div><div class="value" id="dEco">—</div></div>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="genBtn">Generar Futuro</button>
+          <button class="btn secondary" id="mutBtn">Mutar escenario</button>
+          <button class="btn secondary" id="regenBtn">Regenerar (reemplazar)</button>
+          <button class="btn secondary" id="clearCurrentBtn">Borrar actual</button>
+        </div>
+
+        <div class="meter" style="margin-top:12px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--muted);"></div>
+          <div class="meterBar"><div class="meterFill" id="meterFill"></div></div>
+          <div class="meterLabel" id="meterLabel">Tensión: —</div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700;color:var(--accent1)">Tablero de la clase</div>
+          <div style="font-size:12px;color:var(--muted)">Clic en una tarjeta para eliminarla</div>
+        </div>
+        <div class="board" id="board"></div>
+
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button class="btn" id="exportBtn">Exportar tablero (.json)</button>
+          <button class="btn secondary" id="exportCSVBtn">Exportar CSV</button>
+          <button class="btn secondary" id="clearBoardBtn">Limpiar tablero</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="panel">
+        <h3>Caos controlado</h3>
+        <div style="font-size:13px;color:var(--muted);line-height:1.4">
+          Ajustá el slider para elegir qué tipo de combinación querés generar.
+        </div>
+
+        <div class="row" style="margin-top:8px; align-items:center;">
+          <label style="min-width:90px;color:var(--muted)">Modo</label>
+          <select id="mode" style="padding:6px;border-radius:8px;background:transparent;color:#eaf7f0;border:1px solid rgba(255,255,255,0.04)">
+            <option value="random">Aleatorio (50%)</option>
+            <option value="harmonious">Armonioso</option>
+            <option value="conflictive">Conflictivo</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label style="min-width:90px;color:var(--muted)">Grado</label>
+          <input id="chaosRange" class="range" type="range" min="-100" max="100" value="0">
+        </div>
+
+        <div style="font-size:13px;color:var(--muted);margin-top:8px">
+          - Valores positivos favorecen afinidades; valores negativos favorecen fricciones.<br>
+          - Podés combinar modo + slider: por ejemplo, "Armonioso" con grado -30 suaviza la armonía.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Parámetros</h3>
+        <div style="font-size:13px;color:var(--muted);line-height:1.4">
+          <label style="display:block;margin-bottom:6px">Palabras del título</label>
+          <select id="titleWords" style="padding:6px;border-radius:8px;background:transparent;color:#eaf7f0;border:1px solid rgba(255,255,255,0.04)">
+            <option value="3">3</option><option value="2">2</option><option value="4">4</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Guía rápida</h3>
+        <div style="font-size:13px;color:var(--muted);line-height:1.4">
+          - Generá múltiples versiones de un escenario y compará su índice de tensión.<br>
+          - Usá "Agregar al tablero" para construir un mapa colectivo.<br>
+          - Exportá CSV para imprimir fichas y distribuirlas en grupos.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">Diseño de Futuros · FADU UBA · Atlas de Futuros Alternativos</div>
+
+<script>
+// --- Datos base (5 dims × 6 categorías) ---
+const ONTO = ["Materia viva","Entidad digital","Espíritu territorial","Máquina consciente","Campo energético","Oscuridad primordial"];
+const TECH = ["Sintrópica/regenerativa","Automatizada/algorítmica","Ritual/simbólica","Artesanal/comunitaria","Industrial/extractiva","Biohíbrida/micelial"];
+const SOC = ["Comunidad simbiótica","Megacorporación transplanetaria","Confederación no humana","Red anónima descentralizada","Estado tecnocrático","Ecosistema autogobernado"];
+const ECO = ["Cultivo regenerativo","Terraformación corporativa","Descomposición creativa","Reforestación planetaria","Polinización aumentada","Extinción dirigida"];
+const EPI = ["Saber ancestral","Lógica cuántica","Teología vegetal","Ciencia especulativa","Memoria del agua","Inteligencia oracular artificial"];
+
+// --- Matriz de fricción (objetos with values -1,0,1) ---
+const FRICTION = {
+  "Materia viva": {"Sintrópica/regenerativa":1,"Automatizada/algorítmica":0,"Ritual/simbólica":1,"Artesanal/comunitaria":1,"Industrial/extractiva":-1,"Biohíbrida/micelial":1,
+                   "Comunidad simbiótica":1,"Megacorporación transplanetaria":-1,"Confederación no humana":1,"Red anónima descentralizada":0,"Estado tecnocrático":-1,"Ecosistema autogobernado":1,
+                   "Cultivo regenerativo":1,"Terraformación corporativa":-1,"Descomposición creativa":1,"Reforestación planetaria":1,"Polinización aumentada":1,"Extinción dirigida":-1,
+                   "Saber ancestral":1,"Lógica cuántica":0,"Teología vegetal":1,"Ciencia especulativa":0,"Memoria del agua":1,"Inteligencia oracular artificial":0},
+
+  "Entidad digital": {"Sintrópica/regenerativa":0,"Automatizada/algorítmica":1,"Ritual/simbólica":-1,"Artesanal/comunitaria":0,"Industrial/extractiva":1,"Biohíbrida/micelial":0,
+                     "Comunidad simbiótica":0,"Megacorporación transplanetaria":1,"Confederación no humana":0,"Red anónima descentralizada":1,"Estado tecnocrático":1,"Ecosistema autogobernado":-1,
+                     "Cultivo regenerativo":-1,"Terraformación corporativa":1,"Descomposición creativa":0,"Reforestación planetaria":-1,"Polinización aumentada":0,"Extinción dirigida":1,
+                     "Saber ancestral":-1,"Lógica cuántica":1,"Teología vegetal":-1,"Ciencia especulativa":1,"Memoria del agua":0,"Inteligencia oracular artificial":1},
+
+  "Espíritu territorial": {"Sintrópica/regenerativa":1,"Automatizada/algorítmica":-1,"Ritual/simbólica":1,"Artesanal/comunitaria":1,"Industrial/extractiva":-1,"Biohíbrida/micelial":1,
+                          "Comunidad simbiótica":1,"Megacorporación transplanetaria":-1,"Confederación no humana":1,"Red anónima descentralizada":-1,"Estado tecnocrático":-1,"Ecosistema autogobernado":1,
+                          "Cultivo regenerativo":1,"Terraformación corporativa":-1,"Descomposición creativa":1,"Reforestación planetaria":1,"Polinización aumentada":1,"Extinción dirigida":-1,
+                          "Saber ancestral":1,"Lógica cuántica":0,"Teología vegetal":1,"Ciencia especulativa":0,"Memoria del agua":1,"Inteligencia oracular artificial":0},
+
+  "Máquina consciente": {"Sintrópica/regenerativa":0,"Automatizada/algorítmica":1,"Ritual/simbólica":-1,"Artesanal/comunitaria":-1,"Industrial/extractiva":1,"Biohíbrida/micelial":0,
+                        "Comunidad simbiótica":-1,"Megacorporación transplanetaria":1,"Confederación no humana":0,"Red anónima descentralizada":1,"Estado tecnocrático":1,"Ecosistema autogobernado":-1,
+                        "Cultivo regenerativo":0,"Terraformación corporativa":1,"Descomposición creativa":0,"Reforestación planetaria":-1,"Polinización aumentada":0,"Extinción dirigida":1,
+                        "Saber ancestral":-1,"Lógica cuántica":1,"Teología vegetal":-1,"Ciencia especulativa":1,"Memoria del agua":0,"Inteligencia oracular artificial":1},
+
+  "Campo energético": {"Sintrópica/regenerativa":1,"Automatizada/algorítmica":0,"Ritual/simbólica":1,"Artesanal/comunitaria":0,"Industrial/extractiva":-1,"Biohíbrida/micelial":0,
+                     "Comunidad simbiótica":1,"Megacorporación transplanetaria":-1,"Confederación no humana":1,"Red anónima descentralizada":0,"Estado tecnocrático":-1,"Ecosistema autogobernado":1,
+                     "Cultivo regenerativo":1,"Terraformación corporativa":-1,"Descomposición creativa":0,"Reforestación planetaria":1,"Polinización aumentada":1,"Extinción dirigida":-1,
+                     "Saber ancestral":1,"Lógica cuántica":0,"Teología vegetal":1,"Ciencia especulativa":0,"Memoria del agua":1,"Inteligencia oracular artificial":0},
+
+  "Oscuridad primordial": {"Sintrópica/regenerativa":0,"Automatizada/algorítmica":-1,"Ritual/simbólica":1,"Artesanal/comunitaria":0,"Industrial/extractiva":-1,"Biohíbrida/micelial":0,
+                          "Comunidad simbiótica":0,"Megacorporación transplanetaria":-1,"Confederación no humana":0,"Red anónima descentralizada":0,"Estado tecnocrático":-1,"Ecosistema autogobernado":0,
+                          "Cultivo regenerativo":0,"Terraformación corporativa":-1,"Descomposición creativa":1,"Reforestación planetaria":0,"Polinización aumentada":0,"Extinción dirigida":1,
+                          "Saber ancestral":1,"Lógica cuántica":0,"Teología vegetal":1,"Ciencia especulativa":0,"Memoria del agua":1,"Inteligencia oracular artificial":0}
+};
+
+// --- Estado ---
+let escenario = {};
+let board = [];
+
+// Utils
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function idRandom(){ return 'FUT-' + String(Math.floor(Math.random()*900)+100); }
+function nowIso(){ return new Date().toISOString(); }
+
+// compute friction index (normalized)
+function computeFrictionIndex(s){
+  let total=0, count=0;
+  const ont = s['Ontología'], tech = s['Tecnología'], soc = s['Sociedad'], eco = s['Ecología'], epi = s['Epistemología'];
+  if(FRICTION[ont]){
+    [tech,soc,eco,epi].forEach(v=>{
+      if(v && FRICTION[ont][v] !== undefined){ total += FRICTION[ont][v]; count++; }
+    });
+  }
+  // approximate additional links (TECH->SOC/ECO/EPI) via scanning FRICTION maps
+  Object.keys(FRICTION).forEach(o=>{
+    const map = FRICTION[o];
+    if(map[tech] !== undefined){
+      [soc,eco,epi].forEach(k=>{
+        if(map[k] !== undefined){ total += map[k] * (map[tech] === 0 ? 0.6 : map[tech]); count++; }
+      });
+    }
+  });
+  if(count===0) return 0;
+  const avg = total / count;
+  return Math.max(-1, Math.min(1, avg));
+}
+
+// title and narr
+function makeTitle(wordsCount){
+  const vals = Object.values(escenario);
+  if(vals.length===0) return '— — —';
+  const pick=[];
+  for(let i=0;i<wordsCount;i++){ pick.push(rand(vals)); }
+  return pick.join(' · ');
+}
+function genNarr(){
+  const o = escenario['Ontología']||'...'; const t = escenario['Territorio']||'...'; const s = escenario['Sociedad']||'...';
+  const te = escenario['Tecnología']||'...'; const e = escenario['Ecología']||'...'; const epi = escenario['Epistemología']||'...';
+  const starts = [`En un futuro ${t.toLowerCase()},`,`En los bordes de un territorio ${t.toLowerCase()},`,`Tras décadas de transformación ${o.toLowerCase()},`,`Bajo la superficie ${t.toLowerCase()},`];
+  const middles = [`surgen prácticas ${s.toLowerCase()} que reconfiguran la convivencia.`,`las tecnologías ${te.toLowerCase()} se integran como rituales cotidianos.`,`las entidades ${o.toLowerCase()} establecen intercambios inesperados con sistemas ${epi.toLowerCase()}.`,`la vida se organiza según lógicas ${o.toLowerCase()} que desafían el presente.`];
+  const ends = [`Una ecología ${e.toLowerCase()} marca las reglas del habitar.`,`Solo quienes comprenden la relación ${epi.toLowerCase()} prosperan.`,`El equilibrio se sostiene en tensiones creativas entre culturas y sistemas.`,`Las fronteras entre lo técnico y lo sagrado se desdibujan.`];
+  return rand(starts) + ' ' + rand(middles) + ' ' + rand(ends);
+}
+
+// pickWithBias used in generation (bias from mode+slider)
+function generarFuturo(options={replace:false}){
+  const mode = document.getElementById('mode').value;
+  const chaos = parseInt(document.getElementById('chaosRange').value,10);
+  let bias = 0;
+  if(mode==='harmonious') bias = 60; if(mode==='conflictive') bias = -60;
+  bias = bias + chaos; // -160..160
+  const threshold = Math.max(-1, Math.min(1, bias / 160));
+  function pickWithBias(listArray){
+    const partial = Object.assign({}, escenario);
+    let scores = [];
+    listArray.forEach(candidate=>{
+      let score=0,n=0;
+      Object.keys(partial).forEach(existingKey=>{
+        const existingVal = partial[existingKey];
+        if(!existingVal) return;
+        if(FRICTION[existingVal] && FRICTION[existingVal][candidate] !== undefined){ score += FRICTION[existingVal][candidate]; n++; }
+        else if(FRICTION[candidate] && FRICTION[candidate][existingVal] !== undefined){ score += FRICTION[candidate][existingVal]; n++; }
+      });
+      const avg = n>0 ? (score/n) : 0;
+      const weight = 1 + (avg * threshold);
+      scores.push({candidate, weight});
+    });
+    const totalW = scores.reduce((s,i)=>s + Math.max(0.05, i.weight), 0);
+    let r = Math.random() * totalW;
+    for(let i=0;i<scores.length;i++){
+      const w = Math.max(0.05, scores[i].weight);
+      if(r <= w) return scores[i].candidate;
+      r -= w;
+    }
+    return scores[scores.length-1].candidate;
+  }
+
+  // seed with Ontología
+  const ont = rand(ONTO);
+  escenario = {"Ontología": ont};
+  escenario["Tecnología"] = pickWithBias(TECH);
+  escenario["Sociedad"] = pickWithBias(SOC);
+  escenario["Ecología"] = pickWithBias(ECO);
+  escenario["Territorio"] = pickWithBias(["Urbano","Subterráneo","Acuático","Ártico","Planetario","Extraterrestre","Fractal","Desértico","Aéreo","Microscópico"]);
+  escenario["Epistemología"] = pickWithBias(EPI);
+
+  escenario["_id"] = idRandom(); escenario["_created"] = nowIso();
+  escenario["_friction"] = computeFrictionIndex(escenario);
+
+  if(!options.replace) updateDisplay();
+  return escenario;
+}
+
+// mutate uses simpler picker
+function mutarFuturo(){
+  if(!escenario || Object.keys(escenario).length===0) return generarFuturo();
+  const dims = ["Ontología","Tecnología","Sociedad","Ecología","Territorio","Epistemología"];
+  const n = Math.floor(Math.random()*2)+1;
+  for(let i=0;i<n;i++){
+    const d = rand(dims);
+    switch(d){
+      case "Ontología": escenario[d]=rand(ONTO); break;
+      case "Tecnología": escenario[d]=rand(TECH); break;
+      case "Sociedad": escenario[d]=rand(SOC); break;
+      case "Ecología": escenario[d]=rand(ECO); break;
+      case "Territorio": escenario[d]=rand(["Urbano","Subterráneo","Acuático","Ártico","Planetario","Extraterrestre","Fractal","Desértico","Aéreo","Microscópico"]); break;
+      case "Epistemología": escenario[d]=rand(EPI); break;
+    }
+  }
+  escenario["_mutated"] = (escenario["_mutated"]||0)+1;
+  escenario["_friction"] = computeFrictionIndex(escenario);
+  updateDisplay();
+}
+
+// UI updates and board
+function updateDisplay(){
+  document.getElementById('dOnt').innerText = escenario['Ontología'] || '—';
+  document.getElementById('dTerr').innerText = escenario['Territorio'] || '—';
+  document.getElementById('dSoc').innerText = escenario['Sociedad'] || '—';
+  document.getElementById('dTec').innerText = escenario['Tecnología'] || '—';
+  document.getElementById('dEco').innerText = escenario['Ecología'] || '—';
+  document.getElementById('titulo').innerText = makeTitle(parseInt(document.getElementById('titleWords').value));
+  document.getElementById('narrativa').innerText = genNarr();
+  document.getElementById('metaId').innerText = 'ID: ' + (escenario['_id']||'—');
+
+  const f = escenario['_friction'] || 0;
+  const pct = Math.round(((f + 1) / 2) * 100);
+  document.getElementById('meterFill').style.width = pct + '%';
+  const label = (f > 0.25) ? 'Baja tensión (más armónico)' : (f < -0.25 ? 'Alta tensión (más conflictivo)' : 'Tensión intermedia');
+  document.getElementById('meterLabel').innerText = label + ' · Índice: ' + f.toFixed(2);
+}
+
+function addToBoard(){
+  if(!escenario || Object.keys(escenario).length===0) return;
+  const item = JSON.parse(JSON.stringify(escenario));
+  item['_boardId'] = 'B-' + Math.floor(Math.random()*1000000);
+  board.unshift(item);
+  saveBoard(); renderBoard();
+}
+function renderBoard(){
+  const el = document.getElementById('board'); el.innerHTML = '';
+  board.forEach(card=>{
+    const c = document.createElement('div'); c.className='boardCard';
+    const ttl = document.createElement('div'); ttl.className='cardTitle'; ttl.innerText = (card['_id']||'') + ' · ' + (card['Ontología']||'');
+    const meta = document.createElement('div'); meta.className='meta'; meta.innerText = new Date(card['_created']).toLocaleString();
+    const tags = document.createElement('div'); tags.style.display='flex'; tags.style.gap='6px'; tags.style.flexWrap='wrap';
+    ['Ontología','Territorio','Sociedad','Tecnología','Ecología','Epistemología'].forEach(k=>{ const t=document.createElement('div'); t.className='tag'; t.innerText = card[k]||'—'; tags.appendChild(t);});
+    const narr = document.createElement('div'); narr.style.marginTop='6px'; narr.style.color='#cfe9df'; narr.style.fontSize='13px'; narr.innerText = (card['_friction']!==undefined?('Índice: '+card['_friction'].toFixed(2)+' — '):'') + genNarrFromCard(card);
+    c.appendChild(ttl); c.appendChild(meta); c.appendChild(tags); c.appendChild(narr);
+    c.addEventListener('click', ()=>{ if(confirm('Eliminar esta tarjeta?')){ board = board.filter(b=>b['_boardId']!==card['_boardId']); saveBoard(); renderBoard(); }});
+    el.appendChild(c);
+  });
+}
+function genNarrFromCard(card){ const prev=JSON.parse(JSON.stringify(escenario)); escenario=card; const txt=genNarr(); escenario=prev; return txt; }
+function saveBoard(){ try{ localStorage.setItem('mf_board_v2', JSON.stringify(board)); }catch(e){} }
+function loadBoard(){ try{ const raw=localStorage.getItem('mf_board_v2'); if(raw){ board=JSON.parse(raw); } }catch(e){ board=[];} renderBoard(); }
+
+// export
+function exportBoard(){ const data={exported:new Date().toISOString(),items:board}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='tablero_futuros_'+(new Date().toISOString().slice(0,10))+'.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+function exportCSV(){ const headers=['_id','Ontología','Territorio','Sociedad','Tecnología','Ecología','Epistemología','_friction','_created']; const rows = board.map(it=> headers.map(h=> '"'+((it[h]||'')+'').replace(/"/g,'""')+'"').join(',')); const csv = headers.join(',') + '\n' + rows.join('\n'); const blob = new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='tablero_futuros_'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+// listeners
+document.getElementById('genBtn').addEventListener('click', ()=>generarFuturo());
+document.getElementById('mutBtn').addEventListener('click', ()=>mutarFuturo());
+document.getElementById('addBtn').addEventListener('click', ()=>addToBoard());
+document.getElementById('exportBtn').addEventListener('click', ()=>exportBoard());
+document.getElementById('exportCSVBtn').addEventListener('click', ()=>exportCSV());
+document.getElementById('clearBoardBtn').addEventListener('click', ()=>{ if(confirm('Limpiar tablero?')){ board=[]; saveBoard(); renderBoard(); }});
+document.getElementById('regenBtn').addEventListener('click', ()=>generarFuturo(true));
+document.getElementById('clearCurrentBtn').addEventListener('click', ()=>{ escenario={}; updateDisplay(); });
+document.getElementById('titleWords').addEventListener('change', ()=>updateDisplay());
+document.getElementById('chaosRange').addEventListener('input', ()=>{/* live update label maybe */});
+
+// init
+loadBoard(); generarFuturo();
+
+</script>
+</body>
+</html>
