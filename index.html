@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matriz de Futuros Pluriversales — Móvil Optimizado</title>
+<title>Matriz de Futuros — Con Bloqueo</title>
 <style>
 :root{
   --bg1:#05060a; --bg2:#071021; --accent1:#8fffd0; --accent2:#c9b7ff;
   --muted:#9fb0b8; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.1);
+  --locked: #2ecc71;
 }
 *{box-sizing:border-box; transition: all 0.2s ease;}
 body{
@@ -15,8 +16,8 @@ body{
   background: radial-gradient(circle at 15% 10%, rgba(143,255,208,0.05) 0%, transparent 20%), linear-gradient(180deg,var(--bg1),var(--bg2));
   color:#e8f1f0; min-height:100vh; padding:15px; display:flex; flex-direction:column; align-items:center;
 }
-.header{text-align:center; margin-bottom:20px;}
-.h1{font-weight:800; letter-spacing:2px; color:var(--accent1); font-size:20px; text-transform: uppercase;}
+.header{text-align:center; margin-bottom:15px;}
+.h1{font-weight:800; letter-spacing:2px; color:var(--accent1); font-size:18px; text-transform: uppercase;}
 
 .app{ width:100%; max-width:1100px; display:flex; flex-direction:column; gap:15px; }
 
@@ -25,45 +26,57 @@ body{
   border: 1px solid var(--border); backdrop-filter: blur(10px);
 }
 .narrative-box{
-  font-size: 16px; line-height: 1.6; color: #cfe9df; font-style: italic;
+  font-size: 15px; line-height: 1.5; color: #cfe9df; font-style: italic;
   margin-bottom: 20px; padding: 15px; border-left: 3px solid var(--accent1); background: rgba(0,0,0,0.2);
-  min-height: 80px; display: flex; align-items: center;
+  min-height: 70px; display: flex; align-items: center;
 }
 
-/* Botones arriba en móvil */
 .controls{ 
   display:flex; gap:10px; justify-content:center; flex-wrap:wrap; 
-  margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--border);
+  margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border);
 }
 .btn{
   background: linear-gradient(90deg,var(--accent1), var(--accent2));
-  color:#03121a; border:none; padding:12px 20px; border-radius:999px;
-  cursor:pointer; font-weight:700; text-transform: uppercase; font-size: 11px;
+  color:#03121a; border:none; padding:10px 18px; border-radius:999px;
+  cursor:pointer; font-weight:700; text-transform: uppercase; font-size: 10px;
 }
 .btn.sec{ background: transparent; border: 1px solid var(--accent2); color: var(--accent2); }
 .btn:active{ transform: scale(0.95); }
 
+/* Grid de categorías */
 .dimgrid{
   display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:10px;
 }
 .dim{
   background: var(--card); border-radius:10px; padding:12px; border: 1px solid var(--border);
+  cursor: pointer; position: relative; overflow: hidden;
 }
+.dim:hover{ border-color: var(--accent1); }
+
+/* Estilo cuando está bloqueado */
+.dim.is-locked {
+  border-color: var(--locked);
+  background: rgba(46, 204, 113, 0.05);
+}
+.dim.is-locked .label { color: var(--locked); }
+.dim.is-locked::after {
+  content: "🔒"; position: absolute; top: 8px; right: 8px; font-size: 12px;
+}
+
 .dim .label{ font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;}
 .dim .value{ font-size:14px; font-weight:600; color:#fff;}
 
 .history-section{ margin-top: 30px; width: 100%; }
-.history-title{ font-size: 13px; color: var(--accent1); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px;}
-.log-container{ display: flex; flex-direction: column; gap: 10px; }
+.history-title{ font-size: 12px; color: var(--accent1); text-transform: uppercase; margin-bottom: 10px;}
+.log-container{ display: flex; flex-direction: column; gap: 8px; }
 .log-item{ 
     background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; 
-    border: 1px solid var(--border); font-size: 12px; line-height: 1.4;
+    border: 1px solid var(--border); font-size: 12px;
 }
-.log-item b { color: var(--accent2); }
 
 @media (max-width:600px){ 
-  .dimgrid{ grid-template-columns: 1fr 1fr; } /* Dos columnas en celu para que no sea tan larga la lista */
-  .btn{ flex: 1 1 45%; } /* Botones más anchos en celu */
+  .dimgrid{ grid-template-columns: 1fr 1fr; } 
+  .btn{ flex: 1 1 45%; }
 }
 </style>
 </head>
@@ -71,11 +84,12 @@ body{
 
 <div class="header">
   <div class="h1">Matriz de Futuros</div>
+  <div style="font-size: 10px; color: var(--muted);">Toca una categoría para fijarla 🔒</div>
 </div>
 
 <div class="app">
   <div class="current-box">
-    <div class="narrative-box" id="narrativa">Presiona "Generar Nuevo" para comenzar la exploración...</div>
+    <div class="narrative-box" id="narrativa">Presiona "Generar" para comenzar...</div>
     
     <div class="controls">
       <button class="btn" onclick="generarTodo()">Generar Nuevo</button>
@@ -111,6 +125,7 @@ const CATEGORIAS = {
 };
 
 let seleccionActual = {};
+let bloqueados = {}; // Objeto para trackear qué categorías no cambian
 let haGenerado = false;
 
 function initApp() {
@@ -119,9 +134,20 @@ function initApp() {
   Object.keys(CATEGORIAS).forEach((cat) => {
     const div = document.createElement('div');
     div.className = 'dim';
+    div.id = `card-${cat}`;
+    div.onclick = () => toggleLock(cat); // Al hacer clic se bloquea/desbloquea
     div.innerHTML = `<div class="label">${cat}</div><div class="value" id="val-${cat}">—</div>`;
     grid.appendChild(div);
+    bloqueados[cat] = false;
   });
+}
+
+function toggleLock(cat) {
+  if(!haGenerado) return; // No bloquear si está vacío
+  bloqueados[cat] = !bloqueados[cat];
+  const el = document.getElementById(`card-${cat}`);
+  if(bloqueados[cat]) el.classList.add('is-locked');
+  else el.classList.remove('is-locked');
 }
 
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -129,17 +155,24 @@ function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function generarTodo() {
   haGenerado = true;
   Object.keys(CATEGORIAS).forEach((cat) => {
-    const val = rand(CATEGORIAS[cat]);
-    seleccionActual[cat] = val;
-    document.getElementById(`val-${cat}`).innerText = val;
+    // SOLO generar si NO está bloqueado
+    if (!bloqueados[cat]) {
+      const val = rand(CATEGORIAS[cat]);
+      seleccionActual[cat] = val;
+      document.getElementById(`val-${cat}`).innerText = val;
+    }
   });
   construirNarrativa();
 }
 
 function mutarParcial() {
   if(!haGenerado) { generarTodo(); return; }
-  const keys = Object.keys(CATEGORIAS);
-  for(let j=0; j<3; j++){
+  const keys = Object.keys(CATEGORIAS).filter(k => !bloqueados[k]); // Solo keys libres
+  if(keys.length === 0) return;
+  
+  // Cambia hasta 3 que estén libres
+  const cant = Math.min(3, keys.length);
+  for(let j=0; j<cant; j++){
     const randomKey = rand(keys);
     const val = rand(CATEGORIAS[randomKey]);
     seleccionActual[randomKey] = val;
