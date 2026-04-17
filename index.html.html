@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Matriz de Futuros Pluriversales — 12 Categorías</title>
+<style>
+:root{
+  --bg1:#05060a; --bg2:#071021; --accent1:#8fffd0; --accent2:#c9b7ff;
+  --muted:#9fb0b8; --card:#0f1720; --border: rgba(255,255,255,0.08);
+}
+*{box-sizing:border-box; transition: all 0.2s ease;}
+body{
+  margin:0; font-family: 'Inter', system-ui, sans-serif;
+  background: radial-gradient(circle at 15% 10%, rgba(143,255,208,0.05) 0%, transparent 20%), linear-gradient(180deg,var(--bg1),var(--bg2));
+  color:#e8f1f0; min-height:100vh; padding:20px; display:flex; flex-direction:column; align-items:center;
+}
+.header{text-align:center; margin-bottom:25px;}
+.h1{font-weight:800; letter-spacing:2px; color:var(--accent1); font-size:22px; text-transform: uppercase;}
+.h2{color:var(--accent2); font-size:13px; opacity:0.8; margin-top:5px;}
+
+.app{ width:100%; max-width:1100px; display:flex; flex-direction:column; gap:20px; }
+
+/* Main Display */
+.current-box{
+  background: rgba(255,255,255,0.02); border-radius:16px; padding:25px;
+  border: 1px solid var(--border); backdrop-filter: blur(10px);
+}
+.narrative-box{
+  font-size: 16px; line-height: 1.6; color: #cfe9df; font-style: italic;
+  margin-bottom: 25px; padding: 15px; border-left: 3px solid var(--accent1); background: rgba(0,0,0,0.2);
+}
+
+/* 12-Grid Layout */
+.dimgrid{
+  display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px;
+}
+.dim{
+  background: rgba(255,255,255,0.03); border-radius:10px; padding:12px;
+  border: 1px solid var(--border);
+}
+.dim:hover{ border-color: var(--accent2); background: rgba(255,255,255,0.05); }
+.dim .label{ font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;}
+.dim .value{ font-size:15px; font-weight:600; color:#fff; text-transform: capitalize;}
+
+/* Controls */
+.controls{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;}
+.btn{
+  background: linear-gradient(90deg,var(--accent1), var(--accent2));
+  color:#03121a; border:none; padding:12px 28px; border-radius:999px;
+  cursor:pointer; font-weight:700; text-transform: uppercase; font-size: 13px;
+}
+.btn:hover{ transform: scale(1.05); box-shadow: 0 0 15px rgba(143,255,208,0.3); }
+.btn.sec{ background: transparent; border: 1px solid var(--accent2); color: var(--accent2); }
+
+.footer{margin-top:40px; font-size:11px; color:var(--muted); opacity:0.6;}
+
+@media (max-width:600px){ .dimgrid{ grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h1">Matriz Generativa de Futuros</div>
+  <div class="h2">Especulación de sistemas complejos — 12 Dimensiones</div>
+</div>
+
+<div class="app">
+  <div class="current-box">
+    <div class="narrative-box" id="narrativa">Haz clic en generar para iniciar el viaje...</div>
+    
+    <div class="dimgrid" id="mainGrid">
+      </div>
+
+    <div class="controls">
+      <button class="btn" onclick="generarTodo()">Generar Escenario</button>
+      <button class="btn sec" onclick="mutarParcial()">Mutar Parcial</button>
+      <button class="btn sec" onclick="copiarTexto()">Copiar Texto</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Diseño de Futuros · Atlas de Futuros Alternativos · 2026</div>
+
+<script>
+const CATEGORIAS = {
+  "Ontología": ["humano","posthumano","cyborg","inteligencia artificial","vegetal","animal","micelial","mineral","multiespecie","espiritual","híbrido bio-digital","colectivo distribuido"],
+  "Cosmología": ["materialista","animista","espiritual","panpsíquica","simulacional","holográfica","multiversal","fractal","mitológica","cibernética","gondwánica","emergentista"],
+  "Ecología": ["sintrópica","regenerativa","simbiótica","extractiva","de mestizaje biocultural","terraformada","rewilded","hiperartificial","metabólica","mutualista","parasitaria","de reparación"],
+  "Tecnología": ["alta tecnología","baja tecnología","tecnología biodigital","tecnología de los comunes","tecnología viva","tecnología autónoma","tecnología invisible","tecnología ritual","tecnología prohibida","tecnología open source","tecnología ancestral","tecnología regenerativa"],
+  "Organización social": ["comunal","cooperativa","algorítmica","corporativa","imperial","anarquista","tribal","post-estatal","federativa","teocrática","horizontal","confederal"],
+  "Economía": ["capitalista","post-capitalista","economía del don","economía de datos","economía energética","economía circular","economía de subsistencia","economía cooperativa","economía de los cuidados","economía algorítmica","economía de abundancia","economía de escasez"],
+  "Territorialidad": ["urbano","rural","selvático","oceánico","desértico","subterráneo","orbital","archipelágico","nómada","planetario","interplanetario","virtual"],
+  "Temporalidad": ["acelerado","lento","cíclico","profundo (deep time)","anacrónico","eterno presente","retrofuturista","futuro permanente","tiempo fractal","tiempo reversible","tiempo suspendido","tiempo ritual"],
+  "Epistemología": ["científica","algorítmica","colectiva","ancestral","chamánica","vegetal","artificial","ritual","experimental","empírica","intuitiva","distribuida"],
+  "Comunicación": ["lenguaje verbal","comunicación química","telepática","algorítmica","vegetal","simbólica ritual","sensorial expandida","interfaz neuronal","holográfica","acústica","lumínica","gestual"],
+  "Régimen de realidad": ["realista","onírico","mitológico","simulacional","alucinatorio","espiritual","híbrido físico-digital","ritual","ficcional consciente","hiperreal","metamórfico","espectral"],
+  "Tipo de futuro": ["utópico","queer","indígena","afrodiaspórico","austral / gondwánico","pluriversal","solarpunk","biocéntrico","posthumano","regenerativo","de transición","heterotópico"]
+};
+
+let seleccionActual = {};
+
+function initGrid() {
+  const grid = document.getElementById('mainGrid');
+  grid.innerHTML = '';
+  Object.keys(CATEGORIAS).forEach((cat, index) => {
+    const div = document.createElement('div');
+    div.className = 'dim';
+    div.innerHTML = `<div class="label">${cat}</div><div class="value" id="val-${index}">—</div>`;
+    grid.appendChild(div);
+  });
+}
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generarTodo() {
+  Object.keys(CATEGORIAS).forEach((cat, i) => {
+    const val = rand(CATEGORIAS[cat]);
+    seleccionActual[cat] = val;
+    document.getElementById(`val-${i}`).innerText = val;
+  });
+  construirNarrativa();
+}
+
+function mutarParcial() {
+  // Cambia solo 3 categorías al azar
+  const keys = Object.keys(CATEGORIAS);
+  for(let j=0; j<3; j++){
+    const randomKey = rand(keys);
+    const i = keys.indexOf(randomKey);
+    const val = rand(CATEGORIAS[randomKey]);
+    seleccionActual[randomKey] = val;
+    document.getElementById(`val-${i}`).innerText = val;
+  }
+  construirNarrativa();
+}
+
+function construirNarrativa() {
+  const s = seleccionActual;
+  const n = `"En un futuro ${s['Tipo de futuro']}, la existencia se manifiesta a través de un ser ${s['Ontología']} que habita un territorio ${s['Territorialidad']}. Bajo una cosmología ${s['Cosmología']}, la sociedad se organiza de forma ${s['Organización social']}, mediada por una economía ${s['Economía']} y una temporalidad ${s['Temporalidad']}. Aquí, la realidad se percibe como algo ${s['Régimen de realidad']}."`;
+  document.getElementById('narrativa').innerText = n;
+}
+
+function copiarTexto() {
+  let texto = "ESCENARIO DE FUTURO:\n\n";
+  Object.entries(seleccionActual).forEach(([k,v]) => {
+    texto += `${k}: ${v}\n`;
+  });
+  texto += `\nNarrativa: ${document.getElementById('narrativa').innerText}`;
+  navigator.clipboard.writeText(texto);
+  alert("Copiado al portapapeles");
+}
+
+initGrid();
+generarTodo();
+</script>
+
+</body>
+</html>
