@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matriz de Futuros Pluriversales — 12 Categorías</title>
+<title>Matriz de Futuros Pluriversales — v2</title>
 <style>
 :root{
   --bg1:#05060a; --bg2:#071021; --accent1:#8fffd0; --accent2:#c9b7ff;
-  --muted:#9fb0b8; --card:#0f1720; --border: rgba(255,255,255,0.08);
+  --muted:#9fb0b8; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.1);
 }
 *{box-sizing:border-box; transition: all 0.2s ease;}
 body{
@@ -17,11 +17,9 @@ body{
 }
 .header{text-align:center; margin-bottom:25px;}
 .h1{font-weight:800; letter-spacing:2px; color:var(--accent1); font-size:22px; text-transform: uppercase;}
-.h2{color:var(--accent2); font-size:13px; opacity:0.8; margin-top:5px;}
 
 .app{ width:100%; max-width:1100px; display:flex; flex-direction:column; gap:20px; }
 
-/* Main Display */
 .current-box{
   background: rgba(255,255,255,0.02); border-radius:16px; padding:25px;
   border: 1px solid var(--border); backdrop-filter: blur(10px);
@@ -31,29 +29,35 @@ body{
   margin-bottom: 25px; padding: 15px; border-left: 3px solid var(--accent1); background: rgba(0,0,0,0.2);
 }
 
-/* 12-Grid Layout */
 .dimgrid{
   display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px;
 }
 .dim{
-  background: rgba(255,255,255,0.03); border-radius:10px; padding:12px;
-  border: 1px solid var(--border);
+  background: var(--card); border-radius:10px; padding:12px; border: 1px solid var(--border);
 }
-.dim:hover{ border-color: var(--accent2); background: rgba(255,255,255,0.05); }
 .dim .label{ font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;}
-.dim .value{ font-size:15px; font-weight:600; color:#fff; text-transform: capitalize;}
+.dim .value{ font-size:15px; font-weight:600; color:#fff;}
 
-/* Controls */
-.controls{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;}
+.controls{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:25px; padding-bottom: 20px; border-bottom: 1px solid var(--border);}
 .btn{
   background: linear-gradient(90deg,var(--accent1), var(--accent2));
   color:#03121a; border:none; padding:12px 28px; border-radius:999px;
-  cursor:pointer; font-weight:700; text-transform: uppercase; font-size: 13px;
+  cursor:pointer; font-weight:700; text-transform: uppercase; font-size: 12px;
 }
-.btn:hover{ transform: scale(1.05); box-shadow: 0 0 15px rgba(143,255,208,0.3); }
 .btn.sec{ background: transparent; border: 1px solid var(--accent2); color: var(--accent2); }
+.btn:hover{ transform: translateY(-2px); box-shadow: 0 5px 15px rgba(143,255,208,0.2); }
 
-.footer{margin-top:40px; font-size:11px; color:var(--muted); opacity:0.6;}
+/* Historial */
+.history-section{ margin-top: 20px; width: 100%; }
+.history-title{ font-size: 14px; color: var(--accent1); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px;}
+.log-container{ display: flex; flex-direction: column; gap: 10px; }
+.log-item{ 
+    background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; 
+    border: 1px solid var(--border); font-size: 13px; line-height: 1.4;
+    position: relative; animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from{opacity:0; transform: translateY(10px);} to{opacity:1; transform: translateY(0);} }
+.log-item b { color: var(--accent2); }
 
 @media (max-width:600px){ .dimgrid{ grid-template-columns: 1fr; } }
 </style>
@@ -61,26 +65,29 @@ body{
 <body>
 
 <div class="header">
-  <div class="h1">Matriz Generativa de Futuros</div>
-  <div class="h2">Especulación de sistemas complejos — 12 Dimensiones</div>
+  <div class="h1">Matriz de Futuros Pluriversales</div>
 </div>
 
 <div class="app">
   <div class="current-box">
-    <div class="narrative-box" id="narrativa">Haz clic en generar para iniciar el viaje...</div>
+    <div class="narrative-box" id="narrativa">Generando primer escenario...</div>
     
-    <div class="dimgrid" id="mainGrid">
-      </div>
+    <div class="dimgrid" id="mainGrid"></div>
 
     <div class="controls">
-      <button class="btn" onclick="generarTodo()">Generar Escenario</button>
+      <button class="btn" onclick="generarTodo()">Generar Nuevo</button>
       <button class="btn sec" onclick="mutarParcial()">Mutar Parcial</button>
-      <button class="btn sec" onclick="copiarTexto()">Copiar Texto</button>
+      <button class="btn sec" style="border-color: #fff; color: #fff;" onclick="guardarEnHistorial()">⭐ Guardar Escenario</button>
+    </div>
+
+    <div class="history-section">
+        <div class="history-title">Escenarios Guardados</div>
+        <div id="logContainer" class="log-container">
+            <div style="color: var(--muted); font-size: 12px;">No hay escenarios guardados aún.</div>
+        </div>
     </div>
   </div>
 </div>
-
-<div class="footer">Diseño de Futuros · Atlas de Futuros Alternativos · 2026</div>
 
 <script>
 const CATEGORIAS = {
@@ -90,8 +97,8 @@ const CATEGORIAS = {
   "Tecnología": ["alta tecnología","baja tecnología","tecnología biodigital","tecnología de los comunes","tecnología viva","tecnología autónoma","tecnología invisible","tecnología ritual","tecnología prohibida","tecnología open source","tecnología ancestral","tecnología regenerativa"],
   "Organización social": ["comunal","cooperativa","algorítmica","corporativa","imperial","anarquista","tribal","post-estatal","federativa","teocrática","horizontal","confederal"],
   "Economía": ["capitalista","post-capitalista","economía del don","economía de datos","economía energética","economía circular","economía de subsistencia","economía cooperativa","economía de los cuidados","economía algorítmica","economía de abundancia","economía de escasez"],
-  "Territorialidad": ["urbano","rural","selvático","oceánico","desértico","subterráneo","orbital","archipelágico","nómada","planetario","interplanetario","virtual"],
-  "Temporalidad": ["acelerado","lenta","cíclico","profundo (deep time)","anacrónico","eterno presente","retrofuturista","futuro permanente","tiempo fractal","tiempo reversible","tiempo suspendido","tiempo ritual"],
+  "Territorialidad": ["urbana","rural","selvática","oceánica","desértica","subterránea","orbital","archipelágica","nómada","planetaria","interplanetaria","virtual"],
+  "Temporalidad": ["acelerada","lenta","cíclica","profunda (deep time)","anacrónica","eterno presente","retrofuturista","futuro permanente","tiempo fractal","tiempo reversible","tiempo suspendido","tiempo ritual"],
   "Epistemología": ["científica","algorítmica","colectiva","ancestral","chamánica","vegetal","artificial","ritual","experimental","empírica","intuitiva","distribuida"],
   "Comunicación": ["lenguaje verbal","comunicación química","telepática","algorítmica","vegetal","simbólica ritual","sensorial expandida","interfaz neuronal","holográfica","acústica","lumínica","gestual"],
   "Régimen de realidad": ["realista","onírico","mitológico","simulacional","alucinatorio","espiritual","híbrido físico-digital","ritual","ficcional consciente","hiperreal","metamórfico","espectral"],
@@ -100,59 +107,66 @@ const CATEGORIAS = {
 
 let seleccionActual = {};
 
-function initGrid() {
+// Inicializar la estructura una sola vez
+function initApp() {
   const grid = document.getElementById('mainGrid');
   grid.innerHTML = '';
   Object.keys(CATEGORIAS).forEach((cat, index) => {
     const div = document.createElement('div');
     div.className = 'dim';
-    div.innerHTML = `<div class="label">${cat}</div><div class="value" id="val-${index}">—</div>`;
+    // Usamos el nombre de la categoría como parte del ID para evitar errores de duplicidad
+    div.innerHTML = `<div class="label">${cat}</div><div class="value" id="val-${cat}">—</div>`;
     grid.appendChild(div);
   });
+  generarTodo();
 }
 
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function generarTodo() {
-  Object.keys(CATEGORIAS).forEach((cat, i) => {
+  Object.keys(CATEGORIAS).forEach((cat) => {
     const val = rand(CATEGORIAS[cat]);
     seleccionActual[cat] = val;
-    document.getElementById(`val-${i}`).innerText = val;
+    document.getElementById(`val-${cat}`).innerText = val;
   });
   construirNarrativa();
 }
 
 function mutarParcial() {
-  // Cambia solo 3 categorías al azar
   const keys = Object.keys(CATEGORIAS);
+  // Elegimos 3 categorías al azar para mutar
   for(let j=0; j<3; j++){
     const randomKey = rand(keys);
-    const i = keys.indexOf(randomKey);
     const val = rand(CATEGORIAS[randomKey]);
     seleccionActual[randomKey] = val;
-    document.getElementById(`val-${i}`).innerText = val;
+    document.getElementById(`val-${randomKey}`).innerText = val;
   }
   construirNarrativa();
 }
 
 function construirNarrativa() {
   const s = seleccionActual;
-  const n = `"En un futuro ${s['Tipo de futuro']}, la existencia se manifiesta a través de un ser ${s['Ontología']} que habita un territorio ${s['Territorialidad']}. Bajo una cosmología ${s['Cosmología']}, la sociedad se organiza de forma ${s['Organización social']}, mediada por una economía ${s['Economía']} y una temporalidad ${s['Temporalidad']}. Aquí, la realidad se percibe como algo ${s['Régimen de realidad']}."`;
+  const n = `"En un futuro ${s['Tipo de futuro']}, la existencia se manifiesta a través de un ser ${s['Ontología']} en una territorialidad ${s['Territorialidad']}. Bajo una cosmología ${s['Cosmología']}, la sociedad se organiza de forma ${s['Organización social']}, mediada por una economía ${s['Economía']} y una temporalidad ${s['Temporalidad']}. Aquí, la realidad se percibe como algo ${s['Régimen de realidad']}."`;
   document.getElementById('narrativa').innerText = n;
 }
 
-function copiarTexto() {
-  let texto = "ESCENARIO DE FUTURO:\n\n";
-  Object.entries(seleccionActual).forEach(([k,v]) => {
-    texto += `${k}: ${v}\n`;
-  });
-  texto += `\nNarrativa: ${document.getElementById('narrativa').innerText}`;
-  navigator.clipboard.writeText(texto);
-  alert("Copiado al portapapeles");
+function guardarEnHistorial() {
+    const container = document.getElementById('logContainer');
+    // Limpiar el mensaje de "No hay escenarios" si es el primero
+    if (container.innerHTML.includes("No hay escenarios")) container.innerHTML = "";
+
+    const item = document.createElement('div');
+    item.className = 'log-item';
+    
+    // Formateamos un resumen rápido para el log
+    const resumen = `<b>${seleccionActual['Tipo de futuro'].toUpperCase()}</b>: Ser ${seleccionActual['Ontología']} en entorno ${seleccionActual['Territorialidad']}. Econ: ${seleccionActual['Economía']} | Org: ${seleccionActual['Organización social']} | Realidad: ${seleccionActual['Régimen de realidad']}.`;
+    
+    item.innerHTML = `<div>${resumen}</div><div style="margin-top:8px; font-size:11px; opacity:0.7; border-top: 1px solid rgba(255,255,255,0.05); padding-top:5px;">${document.getElementById('narrativa').innerText}</div>`;
+    
+    container.prepend(item); // Agrega al principio de la lista
 }
 
-initGrid();
-generarTodo();
+window.onload = initApp;
 </script>
 
 </body>
