@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Matriz de Futuros — Límite de 3 Bloqueos</title>
+<title>Matriz de Futuros</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%238fffd0%22/><text y=%22.9em%22 font-size=%2290%22 font-family=%22monospace%22 font-weight=%22bold%22 fill=%22%2305060a%22 x=%2215%22>F</text></svg>">
+
 <style>
 :root{
   --bg1:#05060a; --bg2:#071021; --accent1:#8fffd0; --accent2:#c9b7ff;
   --muted:#9fb0b8; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.1);
-  --locked: #2ecc71;
-  --error: #ff6b6b;
+  --locked: #2ecc71; --error: #ff6b6b;
 }
 *{box-sizing:border-box; transition: all 0.2s ease;}
 body{
@@ -27,11 +28,14 @@ body{
   background: rgba(255,255,255,0.02); border-radius:16px; padding:20px;
   border: 1px solid var(--border); backdrop-filter: blur(10px);
 }
+
+/* Narrativa con resaltado */
 .narrative-box{
-  font-size: 15px; line-height: 1.5; color: #cfe9df; font-style: italic;
+  font-size: 16px; line-height: 1.6; color: #cfe9df; font-style: italic;
   margin-bottom: 20px; padding: 15px; border-left: 3px solid var(--accent1); background: rgba(0,0,0,0.2);
-  min-height: 70px; display: flex; align-items: center;
+  min-height: 80px;
 }
+.highlight { color: var(--accent1); font-weight: bold; font-style: normal; }
 
 .controls{ 
   display:flex; gap:10px; justify-content:center; flex-wrap:wrap; 
@@ -44,36 +48,45 @@ body{
 }
 .btn.sec{ background: transparent; border: 1px solid var(--accent2); color: var(--accent2); }
 
-/* Grid y Cards */
+/* Grid */
 .dimgrid{
   display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:10px;
 }
 .dim{
   background: var(--card); border-radius:10px; padding:12px; border: 1px solid var(--border);
-  cursor: pointer; position: relative; overflow: hidden;
+  cursor: pointer; position: relative;
 }
-
-/* Bloqueo y Alerta */
 .dim.is-locked { border-color: var(--locked); background: rgba(46, 204, 113, 0.05); }
 .dim.is-locked::after { content: "🔒"; position: absolute; top: 8px; right: 8px; font-size: 12px; }
-.dim.shake { animation: shake 0.4s ease; border-color: var(--error); }
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
 .dim .label{ font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;}
 .dim .value{ font-size:14px; font-weight:600; color:#fff;}
 
-/* Historial */
-.history-section{ margin-top: 30px; width: 100%; }
-.history-title{ font-size: 12px; color: var(--accent1); text-transform: uppercase; margin-bottom: 10px;}
-.log-container{ display: flex; flex-direction: column; gap: 8px; }
-.log-item{ background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 11px; }
+/* Historial Detallado */
+.history-section{ margin-top: 30px; width: 100%; border-top: 1px solid var(--border); padding-top: 20px;}
+.history-header{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.log-container{ display: flex; flex-direction: column; gap: 12px; }
 
-@media (max-width:600px){ .dimgrid{ grid-template-columns: 1fr 1fr; } .btn{ flex: 1 1 45%; } }
+.log-item{ 
+  background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; 
+  border: 1px solid var(--border); font-size: 11px;
+}
+.log-grid { 
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+  gap: 8px; margin-top: 10px; opacity: 0.8;
+}
+.log-data { border-left: 1px solid var(--accent2); padding-left: 6px; }
+.log-data i { color: var(--muted); display: block; font-size: 8px; }
+
+.log-narrative { 
+  display: none; margin-top: 15px; padding: 10px; 
+  background: rgba(0,0,0,0.3); border-radius: 6px; font-style: italic; border-left: 2px solid var(--accent1);
+}
+.show-more { 
+  margin-top: 10px; background: none; border: 1px solid var(--muted); 
+  color: var(--muted); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 9px;
+}
+
+@media (max-width:600px){ .dimgrid{ grid-template-columns: 1fr 1fr; } .btn{ flex: 1 1 43%; } .log-grid { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -96,9 +109,12 @@ body{
     <div class="dimgrid" id="mainGrid"></div>
 
     <div class="history-section">
-        <div class="history-title">Escenarios Guardados</div>
+        <div class="history-header">
+            <div style="font-size: 12px; color: var(--accent1); text-transform: uppercase;">Escenarios Guardados</div>
+            <button class="btn" style="background: none; border: 1px solid var(--error); color: var(--error); font-size: 9px; padding: 4px 8px;" onclick="limpiarHistorial()">Borrar</button>
+        </div>
         <div id="logContainer" class="log-container">
-            <div style="color: var(--muted); font-size: 11px;">No hay escenarios guardados.</div>
+            <div id="emptyMsg" style="color: var(--muted); font-size: 11px; text-align: center;">No hay datos guardados.</div>
         </div>
     </div>
   </div>
@@ -111,7 +127,7 @@ const CATEGORIAS = {
   "Ecología": ["sintrópica","regenerativa","simbiótica","extractiva","de mestizaje biocultural","terraformada","rewilded","hiperartificial","metabólica","mutualista","parasitaria","de reparación"],
   "Tecnología": ["alta tecnología","baja tecnología","tecnología biodigital","tecnología de los comunes","tecnología viva","tecnología autónoma","tecnología invisible","tecnología ritual","tecnología prohibida","tecnología open source","tecnología ancestral","tecnología regenerativa"],
   "Organización social": ["comunal","cooperativa","algorítmica","corporativa","imperial","anarquista","tribal","post-estatal","federativa","teocrática","horizontal","confederal"],
-  "Economía": ["capitalista","post-capitalista","del don","de datos","energética","circular","de subsistencia","cooperativa","de los cuidados","algorítmica","de abundancia","de escasez"],
+  "Economía": ["capitalista","post-capitalista","del don","de datos","energética","economía circular","de subsistencia","cooperativa","de los cuidados","algorítmica","de abundancia","de escasez"],
   "Territorialidad": ["urbana","rural","selvática","oceánica","desértica","subterránea","orbital","archipelágica","nómada","planetaria","interplanetaria","virtual"],
   "Temporalidad": ["acelerada","lenta","cíclica","profunda (deep time)","anacrónica","eterno presente","retrofuturista","futuro permanente","tiempo fractal","tiempo reversible","tiempo suspendido","tiempo ritual"],
   "Epistemología": ["científica","algorítmica","colectiva","ancestral","chamánica","vegetal","artificial","ritual","experimental","empírica","intuitiva","distribuida"],
@@ -141,26 +157,13 @@ function initApp() {
 
 function toggleLock(cat) {
   if(!haGenerado) return;
-  
   const totalLocked = Object.values(bloqueados).filter(v => v).length;
   const el = document.getElementById(`card-${cat}`);
-
   if (bloqueados[cat]) {
-    // Si ya está bloqueado, lo desbloqueamos siempre
-    bloqueados[cat] = false;
-    el.classList.remove('is-locked');
-  } else {
-    // Si queremos bloquear, chequeamos el límite
-    if (totalLocked < MAX_LOCKS) {
-      bloqueados[cat] = true;
-      el.classList.add('is-locked');
-    } else {
-      // Alerta visual de límite alcanzado
-      el.classList.add('shake');
-      setTimeout(() => el.classList.remove('shake'), 400);
-    }
+    bloqueados[cat] = false; el.classList.remove('is-locked');
+  } else if (totalLocked < MAX_LOCKS) {
+    bloqueados[cat] = true; el.classList.add('is-locked');
   }
-  
   actualizarContador();
 }
 
@@ -175,9 +178,8 @@ function generarTodo() {
   haGenerado = true;
   Object.keys(CATEGORIAS).forEach((cat) => {
     if (!bloqueados[cat]) {
-      const val = rand(CATEGORIAS[cat]);
-      seleccionActual[cat] = val;
-      document.getElementById(`val-${cat}`).innerText = val;
+      seleccionActual[cat] = rand(CATEGORIAS[cat]);
+      document.getElementById(`val-${cat}`).innerText = seleccionActual[cat];
     }
   });
   construirNarrativa();
@@ -186,37 +188,51 @@ function generarTodo() {
 function mutarParcial() {
   if(!haGenerado) { generarTodo(); return; }
   const keys = Object.keys(CATEGORIAS).filter(k => !bloqueados[k]);
-  if(keys.length === 0) return;
-  
   const cant = Math.min(3, keys.length);
   for(let j=0; j<cant; j++){
     const randomKey = rand(keys);
-    const val = rand(CATEGORIAS[randomKey]);
-    seleccionActual[randomKey] = val;
-    document.getElementById(`val-${randomKey}`).innerText = val;
+    seleccionActual[randomKey] = rand(CATEGORIAS[randomKey]);
+    document.getElementById(`val-${randomKey}`).innerText = seleccionActual[randomKey];
   }
   construirNarrativa();
 }
 
 function construirNarrativa() {
   const s = seleccionActual;
-  const n = `"En un futuro ${s['Tipo de futuro']}, la existencia se manifiesta a través de un ser ${s['Ontología']} en una territorialidad ${s['Territorialidad']}. Bajo una cosmología ${s['Cosmología']}, la sociedad se organiza de forma ${s['Organización social']}, mediada por una economía ${s['Economía']} y una temporalidad ${s['Temporalidad']}. Aquí, la realidad se percibe como algo ${s['Régimen de realidad']}."`;
-  document.getElementById('narrativa').innerText = n;
+  const n = `"En un futuro <span class="highlight">${s['Tipo de futuro']}</span>, la existencia se manifiesta a través de un ser <span class="highlight">${s['Ontología']}</span> en una territorialidad <span class="highlight">${s['Territorialidad']}</span>. Bajo una cosmología <span class="highlight">${s['Cosmología']}</span>, la sociedad se organiza de forma <span class="highlight">${s['Organización social']}</span>, mediada por una economía <span class="highlight">${s['Economía']}</span> y una temporalidad <span class="highlight">${s['Temporalidad']}</span>. Aquí, la realidad se percibe como algo <span class="highlight">${s['Régimen de realidad']}</span>."`;
+  document.getElementById('narrativa').innerHTML = n;
 }
 
 function guardarEnHistorial() {
-    if(!haGenerado) return;
-    const container = document.getElementById('logContainer');
-    if (container.innerHTML.includes("No hay escenarios")) container.innerHTML = "";
-    const item = document.createElement('div');
-    item.className = 'log-item';
-    const resumen = `<b>${seleccionActual['Tipo de futuro'].toUpperCase()}</b>: ${seleccionActual['Ontología']} | ${seleccionActual['Territorialidad']}`;
-    item.innerHTML = `<div>${resumen}</div><div style="margin-top:5px; font-size:10px; opacity:0.6;">${document.getElementById('narrativa').innerText}</div>`;
-    container.prepend(item);
+  if(!haGenerado) return;
+  const container = document.getElementById('logContainer');
+  const msg = document.getElementById('emptyMsg');
+  if (msg) msg.remove();
+
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  
+  // Grid de todas las categorías
+  let gridHTML = '<div class="log-grid">';
+  for (const [cat, val] of Object.entries(seleccionActual)) {
+    gridHTML += `<div class="log-data"><i>${cat}</i>${val}</div>`;
+  }
+  gridHTML += '</div>';
+
+  item.innerHTML = `
+    <div style="font-weight:bold; color:var(--accent1); text-transform:uppercase;">${seleccionActual['Tipo de futuro']}</div>
+    ${gridHTML}
+    <button class="show-more" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">Ver Narrativa</button>
+    <div class="log-narrative">${document.getElementById('narrativa').innerText}</div>
+  `;
+  container.prepend(item);
+}
+
+function limpiarHistorial() {
+  if(confirm("¿Borrar historial?")) document.getElementById('logContainer').innerHTML = '<div id="emptyMsg" style="color: var(--muted); font-size: 11px; text-align: center;">No hay datos guardados.</div>';
 }
 
 window.onload = initApp;
 </script>
-
 </body>
 </html>
